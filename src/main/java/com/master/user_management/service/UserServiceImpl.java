@@ -8,6 +8,8 @@ import com.master.user_management.dto.request.UserRegistrationDTO;
 import com.master.user_management.exception.ResourceNotFoundException;
 import com.master.user_management.repository.UserRepository;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +75,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll().stream()
                 .map(UserDTO::new)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<User> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable);
     }
 
     @Override

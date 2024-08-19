@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  server:
+    build: .
+    restart: always
+    ports:
+      - 8081:8080
+    depends_on:
+      - postgresqldb
+  postgresqldb:
+    image: "user-management"
+    restart: always
+    ports:
+      - 5432:5432

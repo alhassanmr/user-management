@@ -1,4 +1,4 @@
-package com.master.user_management.security;
+package com.master.user_management.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

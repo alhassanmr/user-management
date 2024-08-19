@@ -1,7 +1,7 @@
 package com.master.user_management.config;
 
-import com.master.user_management.security.JwtTokenProvider;
-import com.master.user_management.security.JwtTokenFilter;
+import com.master.user_management.jwt.JwtTokenProvider;
+import com.master.user_management.jwt.JwtTokenFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

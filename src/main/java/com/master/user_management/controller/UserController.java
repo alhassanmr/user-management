@@ -8,6 +8,8 @@ import com.master.user_management.exception.ResourceNotFoundException;
 import com.master.user_management.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,11 +42,8 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        log.info("Fetching all users");
-        List<UserDTO> users = userService.getAllUsers();
-        log.info("Found {} users", users.size());
-        return ResponseEntity.ok(users);
+    public Page<User> getAllUsers(Pageable pageable) {
+        return userService.findAll(pageable);
     }
 
     @GetMapping("/{id}")

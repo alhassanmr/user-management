@@ -3,7 +3,7 @@ package com.master.user_management.controller;
 import com.master.user_management.dto.request.UserLoginDTO;
 import com.master.user_management.dto.response.AuthResponse;
 import com.master.user_management.entity.User;
-import com.master.user_management.security.JwtTokenProvider;
+import com.master.user_management.jwt.JwtTokenProvider;
 import com.master.user_management.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
