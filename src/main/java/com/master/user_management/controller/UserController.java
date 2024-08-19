@@ -3,6 +3,7 @@ package com.master.user_management.controller;
 import com.master.user_management.dto.UserDTO;
 import com.master.user_management.dto.request.UserRegistrationDTO;
 import com.master.user_management.dto.request.UserUpdateDTO;
+import com.master.user_management.dto.response.ApiResponse;
 import com.master.user_management.entity.User;
 import com.master.user_management.exception.ResourceNotFoundException;
 import com.master.user_management.service.UserService;
@@ -20,7 +21,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
+
+import static com.master.user_management.util.Constants.SUCCESS;
+import static com.master.user_management.util.Constants.ERROR;
 
 @RestController
 @RequestMapping("/api/users")
@@ -34,49 +37,100 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> registerUser(@RequestBody @Valid UserRegistrationDTO userRegistrationDTO) {
+    public ResponseEntity<ApiResponse<UserDTO>> registerUser(@RequestBody @Valid UserRegistrationDTO userRegistrationDTO) {
         log.info("Registering new user with username: {}", userRegistrationDTO.getUsername());
-        User user = userService.registerUser(userRegistrationDTO);
-        log.info("User registered successfully with ID: {}", user.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new UserDTO(user));
+
+        try {
+            User user = userService.registerUser(userRegistrationDTO);
+            log.info("User registered successfully with ID: {}", user.getId());
+
+            UserDTO userDTO = new UserDTO(user);
+            ApiResponse<UserDTO> response = new ApiResponse<>(SUCCESS, "User registered successfully", userDTO);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error during registration: {}", e.getMessage());
+            ApiResponse<UserDTO> response = new ApiResponse<>(ERROR, e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            log.error("Error occurred during registration: {}", e.getMessage(), e);
+            ApiResponse<UserDTO> response = new ApiResponse<>(ERROR, "User registration failed", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @GetMapping
-    public Page<User> getAllUsers(Pageable pageable) {
-        return userService.findAll(pageable);
+    public ResponseEntity<ApiResponse<Page<UserDTO>>> getAllUsers(Pageable pageable) {
+        try {
+            Page<UserDTO> users = userService.findAll(pageable).map(UserDTO::new);
+            ApiResponse<Page<UserDTO>> response = new ApiResponse<>(SUCCESS, "Users retrieved successfully", users);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error occurred while fetching users: {}", e.getMessage(), e);
+            ApiResponse<Page<UserDTO>> response = new ApiResponse<>(ERROR, "Failed to fetch users", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
         log.info("Fetching user with ID: {}", id);
-        User user = userService.findUserById(id);
-        return ResponseEntity.ok(new UserDTO(user));
+
+        try {
+            User user = userService.findUserById(id);
+            ApiResponse<UserDTO> response = new ApiResponse<>(SUCCESS, "User retrieved successfully", new UserDTO(user));
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            log.warn("User with ID: {} not found", id);
+            ApiResponse<UserDTO> response = new ApiResponse<>(ERROR, "User not found", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            log.error("Error occurred while fetching user with ID: {}", id, e);
+            ApiResponse<UserDTO> response = new ApiResponse<>(ERROR, "Failed to fetch user", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody @Valid UserUpdateDTO userUpdateDTO) {
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable Long id, @RequestBody @Valid UserUpdateDTO userUpdateDTO) {
         log.info("Updating user with ID: {}", id);
-        User updatedUser = userService.updateUser(id, userUpdateDTO);
-        return ResponseEntity.ok(new UserDTO(updatedUser));
+
+        try {
+            User updatedUser = userService.updateUser(id, userUpdateDTO);
+            ApiResponse<UserDTO> response = new ApiResponse<>(SUCCESS, "User updated successfully", new UserDTO(updatedUser));
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            log.warn("User with ID: {} not found", id);
+            ApiResponse<UserDTO> response = new ApiResponse<>(ERROR, "User not found", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error during update: {}", e.getMessage());
+            ApiResponse<UserDTO> response = new ApiResponse<>(ERROR, e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            log.error("Error occurred while updating user with ID: {}", id, e);
+            ApiResponse<UserDTO> response = new ApiResponse<>(ERROR, "User update failed", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable Long id) {
         log.info("Request received to delete user with ID: {}", id);
 
         try {
             userService.deleteUserById(id);
             log.info("User with ID: {} successfully deleted.", id);
-            return ResponseEntity.ok("User with ID: " + id + " has been deleted.");
+            ApiResponse<String> response = new ApiResponse<>(SUCCESS, "User deleted successfully", "User with ID: " + id + " has been deleted.");
+            return ResponseEntity.ok(response);
         } catch (ResourceNotFoundException e) {
             log.warn("User with ID: {} not found. Deletion aborted.", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("User with ID: " + id + " not found.");
+            ApiResponse<String> response = new ApiResponse<>(ERROR, "User not found", "User with ID: " + id + " not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } catch (Exception e) {
             log.error("An error occurred while deleting user with ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred while attempting to delete the user.");
+            ApiResponse<String> response = new ApiResponse<>(ERROR, "Failed to delete user", "An error occurred while attempting to delete the user.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
 }

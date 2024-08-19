@@ -105,6 +105,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<User> findUserByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    @Override
     public User updateUser(Long id, UserUpdateDTO userUpdateDTO) {
         log.info("Updating user with ID: {}", id);
         try {

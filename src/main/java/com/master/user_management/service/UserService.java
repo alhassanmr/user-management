@@ -14,6 +14,7 @@ public interface UserService {
     User registerUser(UserRegistrationDTO userRegistrationDTO);
     Optional<User> authenticateUser(String username, String password);
     User findUserById(Long id);
+    Optional<User> findUserByUsername(String username);
     User updateUser(Long id, UserUpdateDTO userUpdateDTO);
     void deleteUserById(Long id);
     List<UserDTO> getAllUsers();
