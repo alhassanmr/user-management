@@ -3,6 +3,8 @@ package com.master.user_management.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,7 +16,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,13 +23,11 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
 
-    private final SecretKey secretKey;
-    private final long expirationTime;
+    @Value("${jwt.secret}")
+    private String secretKey;
 
-    public JwtTokenProvider(@Value("${jwt.secret}") String secretKey, @Value("${jwt.expiration-time}") long expirationTime) {
-        this.secretKey = new SecretKeySpec(secretKey.getBytes(), SignatureAlgorithm.HS512.getJcaName());
-        this.expirationTime = expirationTime;
-    }
+    @Value("${jwt.expiration-time}")
+    private long expirationTime;
 
     public String createToken(String username, List<GrantedAuthority> authorities) {
         return Jwts.builder()
@@ -38,8 +37,12 @@ public class JwtTokenProvider {
                         .collect(Collectors.toList()))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    private SecretKey key() {
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
 
     public String getUsername(String token) {
